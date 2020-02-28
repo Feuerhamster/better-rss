@@ -1,0 +1,25 @@
+{
+  "name": "better-rss",
+  "version": "1.0.0",
+  "description": "A wrapper around rss-parser",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "_url": "git+https://github.com/Feuerhamster/better-rss.git"
+  },
+  "keywords": [
+    "rss"
+  ],
+  "author": "Feuerhamster",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "_url": "https://github.com/Feuerhamster/better-rss/issues"
+  },
+  "homepage": "https://github.com/Feuerhamster/better-rss#readme",
+  "dependencies": {
+    "rss-parser": "^3.7.5"
+  }
+}
