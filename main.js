@@ -172,7 +172,7 @@ class BetterRSS{
 			}
 
 		}else{
-			return this._rss.parseURL(url);
+			return this._rss.parseURL(feed);
 		}
 
 	}
