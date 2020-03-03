@@ -3,11 +3,11 @@ class BetterRSS{
 	constructor(options) {
 
 		const events = require('events');
-		const rss = require('rss-parser');
 		this._url = require('url');
+		this._axios = require('axios');
+		this._xml = require('xml-js');
 
 		this._events = new events.EventEmitter();
-		this._rss = new rss();
 
 		this.updateInterval = options.updateInterval ? options.updateInterval : 120000;
 		this.feedLinks = options.feeds ? options.feeds : [];
@@ -31,7 +31,7 @@ class BetterRSS{
 		for(let url of this.feedLinks){
 
 			// get _rss feed
-			this._rss.parseURL(url)
+			this.getRSS(url)
 				.then((feed) => {
 
 					/*
@@ -39,12 +39,12 @@ class BetterRSS{
 					* A feed is not initialized, if in this.currentItem is no array.
 					* If a feed is not initialized, the loop over items and event emitter will be ignored.
 					* */
-					if(typeof this._currentItems[feed.link] !== 'undefined'){
+					if(typeof this._currentItems[feed.feed.link] !== 'undefined'){
 
 						// loop over all items in feed
 						for(let item of feed.items){
 							// check if there is a new item
-							if(!this._currentItems[feed.link].includes(item.link)){
+							if(!this._currentItems[feed.feed.link].includes(item.link)){
 								this._events.emit("newItem", item, feed);
 							}
 
@@ -56,7 +56,7 @@ class BetterRSS{
 					* Set _currentItems for this feed to array with links of all items
 					* This will be done every time to be up-to-date with all items
 					* */
-					this._currentItems[feed.link] = Array.from(feed.items, (el) => el.link);
+					this._currentItems[feed.feed.link] = Array.from(feed.items, (el) => el.link);
 
 				})
 				.catch((err) => {
@@ -164,7 +164,7 @@ class BetterRSS{
 		if(typeof feed === 'number'){
 
 			if(this.feedLinks[feed]){
-				return this._rss.parseURL(this.feedLinks[feed]);
+				return this.getRSS(this.feedLinks[feed]);
 			}else{
 				return new Promise((resolve, reject)=>{
 					reject({ error: 'feed_index_not_found' });
@@ -172,8 +172,226 @@ class BetterRSS{
 			}
 
 		}else{
-			return this._rss.parseURL(feed);
+			return this.getRSS(feed);
 		}
+
+	}
+
+	getRSS(url){
+
+		return new Promise((resolve, reject) => {
+
+			this._axios.get(url).then((res) => {
+
+				let data = this._xml.xml2js(res.data, {compact: true});
+				let feed = this.convertFeed(data.feed ? data.feed : data.rss.channel);
+
+				resolve(feed);
+
+			}).catch(err => reject(err));
+
+		});
+
+	}
+
+	convertFeed(data){
+
+		let feed = {
+			title: null,
+			link: null,
+			url: null,
+			author: null,
+			description: null,
+			image: null
+		};
+
+
+		let items = [];
+
+		/*
+		* Title
+		* */
+		feed.title = data.title._text;
+
+		/*
+		* Link
+		* */
+		if(Array.isArray(data.link)){
+
+			let link = data.link.find(el => el._attributes.rel === 'alternate');
+			feed.link = link ? link._attributes.href : null;
+
+		}else if(data.link._text){
+			feed.link = data.link._text;
+		}
+
+		/*
+		* URL
+		* */
+		if(Array.isArray(data.link)){
+
+			let link = data.link.find(el => el._attributes.rel === 'self');
+			feed.url = link ? link._attributes.href : null;
+
+		}
+
+		/*
+		* Author
+		* */
+		if(data.author && data.author._text){
+			feed.author = data.author._text;
+		}else if(data.author && data.author.name){
+			feed.author = data.author.name._text;
+		}
+
+		/*
+		* Description
+		* */
+		if(data.description){
+			feed.description = data.description._text;
+		}
+
+		/*
+		* Image
+		* */
+		if(data.image){
+			feed.image = data.image.url._text;
+		}
+
+
+		/*
+		* Items
+		* */
+
+		let thisitems = null;
+
+		if(data.item){
+			thisitems = data.item;
+		}else if(data.entry){
+			thisitems = data.entry;
+		}
+
+		if(thisitems){
+
+			for(let entry of thisitems ){
+
+				let item = {
+					title: null,
+					pubDate: null,
+					link: null,
+					guid: null,
+					author: null,
+					thumbnail: null,
+					description: null,
+					content: null,
+					categories: []
+				};
+
+				/*
+				* Title
+				* */
+				item.title = entry.title._text;
+
+				/*
+				* pubDate
+				* */
+				if(entry.pubDate){
+					item.pubDate = entry.pubDate._text;
+				}else if(entry.published){
+					item.pubDate = entry.published._text;
+				}
+
+				/*
+				* Link
+				* */
+				if(Array.isArray(entry.link)){
+
+					let link = data.link.find(el => el._attributes.rel === 'alternate');
+					feed.link = link ? link : null;
+
+				}else if(entry.link._attributes){
+					item.link = entry.link._attributes.href;
+				}else if(entry.link._text){
+					item.link = entry.link._text;
+				}
+
+				/*
+				* GUID
+				* */
+				if(entry.guid){
+					item.guid = entry.guid._text;
+				}else if(entry.id){
+					item.guid = entry.id._text;
+				}
+
+				/*
+				* Author
+				* */
+				if(entry.author){
+					item.author = entry.author.name._text;
+				}else if(entry['dc:author']){
+					item.author = entry['dc:author']._cdata;
+				}
+
+				/*
+				* Thumbnail
+				* */
+				if(entry['media:group'] && entry['media:group']['media:thumbnail']){
+					item.thumbnail = entry['media:group']['media:thumbnail']._attributes.url;
+				}else if(entry['content:encoded']._cdata){
+					let thumbnail = /src="([^ ]+)"/gi.exec(entry['content:encoded']._cdata);
+					if(thumbnail){
+						item.thumbnail = thumbnail[1];
+					}
+				}
+
+				/*
+				* Description
+				* */
+				if(entry.description && entry.description._text){
+					item.description = entry.description._text;
+				}else if(entry.description && entry.description._cdata){
+					item.description = entry.description._cdata;
+				}else if(entry['media:group'] && entry['media:group']['media:description']){
+					item.description = entry['media:group']['media:description']._text;
+				}
+
+				/*
+				* Content
+				* */
+				if(entry['content:encoded']){
+					if(entry['content:encoded']._text){
+						item.content = entry['content:encoded']._text;
+					}else if(entry['content:encoded']._cdata){
+						item.content = entry['content:encoded']._cdata;
+					}
+				}
+
+				/*
+				* Categories
+				* */
+				if(entry.category && entry.category._text){
+					item.categories.push(entry.category._text);
+				}else if(Array.isArray(entry.category)){
+					for(let cat of entry.category){
+						if(cat._cdata){
+							item.categories.push(cat._cdata);
+						}
+					}
+				}
+
+				items.push(item);
+
+			}
+
+		}else{
+			items = null;
+		}
+
+		return {
+			feed: feed,
+			items: items
+		};
 
 	}
 

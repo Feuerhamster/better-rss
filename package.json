@@ -1,6 +1,6 @@
 {
   "name": "better-rss",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A wrapper around rss-parser",
   "main": "main.js",
   "scripts": {
@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/Feuerhamster/better-rss#readme",
   "dependencies": {
-    "rss-parser": "^3.7.5"
+    "axios": "^0.19.2",
+    "xml-js": "^1.6.11"
   }
 }
