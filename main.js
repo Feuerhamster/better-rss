@@ -10,13 +10,21 @@ class BetterRSS{
 		this._events = new events.EventEmitter();
 
 		this.updateInterval = options.updateInterval ? options.updateInterval : 120000;
-		this.feedLinks = options.feeds ? options.feeds : [];
+		this.fetchExtraImages = !!options.extraImages;
+		this._currentFeeds = {};
 
-		this._currentItems = {};
+		if(options.feeds && Array.isArray(options.feeds)){
+
+			options.feeds.forEach((feed) => {
+				this._currentFeeds[feed] = null;
+			});
+
+		}
 
 		this._updater = null;
 
-		this.updateFeeds(true);
+		//initial to fetch all feeds on start
+		this.updateFeeds();
 
 		// start auto update
 		if(options.autoUpdate !== false){
@@ -28,23 +36,26 @@ class BetterRSS{
 	updateFeeds(){
 
 		// loop over all feed urls
-		for(let url of this.feedLinks){
+		for(let url in this._currentFeeds){
 
 			// get _rss feed
 			this.getRSS(url)
 				.then((feed) => {
 
 					/*
-					* Check if feed must be initialized.
-					* A feed is not initialized, if in this.currentItem is no array.
+					* Check if the feed must be initialized.
+					* A feed is not initialized, if in this._currentFeeds[feed] is an empty object.
 					* If a feed is not initialized, the loop over items and event emitter will be ignored.
 					* */
-					if(typeof this._currentItems[feed.feed.link] !== 'undefined'){
+					if(this._currentFeeds[url] !== null){
+
+						//create check-array
+						let checkArray = Array.from(this._currentFeeds[url].items, el => el.link);
 
 						// loop over all items in feed
 						for(let item of feed.items){
 							// check if there is a new item
-							if(!this._currentItems[feed.feed.link].includes(item.link)){
+							if(!checkArray.includes(item.link)){
 								this._events.emit("newItem", item, feed);
 							}
 
@@ -53,10 +64,10 @@ class BetterRSS{
 					}
 
 					/*
-					* Set _currentItems for this feed to array with links of all items
+					* Set _currentFeeds for this feed to array with links of all items
 					* This will be done every time to be up-to-date with all items
 					* */
-					this._currentItems[feed.feed.link] = Array.from(feed.items, (el) => el.link);
+					this._currentFeeds[url] = feed;
 
 				})
 				.catch((err) => {
@@ -115,9 +126,9 @@ class BetterRSS{
 		return {
 			add: (url) => {
 
-				if(!this.feedLinks.includes(url)){
+				if(!this._currentFeeds[url]){
 
-					this.feedLinks.push(url);
+					this._currentFeeds[url] = null;
 					return true;
 
 				}else{
@@ -125,68 +136,98 @@ class BetterRSS{
 				}
 
 			},
-			get: (parsed = false) => {
+			get: (feed) => {
+
+				if(typeof feed === 'number'){
+
+					let feeds = Object.keys(this._currentFeeds);
+
+					if(feeds[feed]){
+						return this._currentFeeds[feeds[feed]];
+					}else{
+						return false;
+					}
+
+				}else{
+					if(this._currentFeeds[feed]){
+						return this._currentFeeds[feed];
+					}else{
+						return false;
+					}
+				}
+
+			},
+			getAll: () => {
+				return this._currentFeeds;
+			},
+			list: (parsed = false) => {
 
 				if(parsed){
-					return Array.from(this.feedLinks, (el) =>this._url.parse(el));
+					return Array.from(Object.keys(this._currentFeeds), (el) =>this._url.parse(el));
 				}else{
-					return this.feedLinks;
+					return Array.from(Object.keys(this._currentFeeds));
 				}
 
 			},
-			remove: (url) => {
+			remove: (feed) => {
 
-				let index = this.feedLinks.indexOf(url);
+				if(typeof feed === 'number'){
 
-				if(index > -1){
+					let feeds = Object.keys(this._currentFeeds);
 
-					this.feedLinks.splice(index, 1);
-					return true;
+					if(feeds[feed]){
+						delete this._currentFeeds[feeds[feed]];
+						return true;
+					}else{
+						return false;
+					}
 
 				}else{
-					return false;
+
+					if(typeof this._currentFeeds[feed] !== 'undefined'){
+						delete this._currentFeeds[feed];
+						return true;
+					}else{
+						return false;
+					}
 				}
 
 			},
 			has: (url) => {
 
-				return this.feedLinks.includes(url);
+				return !!this._currentFeeds[url];
 
-			},
-			set: (urlArray) => {
-				this.feedLinks = urlArray;
 			}
 		}
-	}
-
-	fetchFeed(feed){
-
-		if(typeof feed === 'number'){
-
-			if(this.feedLinks[feed]){
-				return this.getRSS(this.feedLinks[feed]);
-			}else{
-				return new Promise((resolve, reject)=>{
-					reject({ error: 'feed_index_not_found' });
-				});
-			}
-
-		}else{
-			return this.getRSS(feed);
-		}
-
 	}
 
 	getRSS(url){
 
 		return new Promise((resolve, reject) => {
 
-			this._axios.get(url).then((res) => {
+			this._axios.get(url).then(async (res) => {
 
 				let data = this._xml.xml2js(res.data, {compact: true});
-				let feed = this.convertFeed(data.feed ? data.feed : data.rss.channel);
+				let feed = this._convertFeed(data.feed ? data.feed : data.rss.channel);
 
-				resolve(feed);
+				if(this.fetchExtraImages) {
+
+					for (let i = 0; i < feed.items.length; i++){
+
+						if (!feed.items[i].thumbnail) {
+							let ogImage = await this._fetchExtraImages(feed.items[i].link);
+
+							feed.items[i].thumbnail = feed.items[i].thumbnail ? feed.items[i].thumbnail : ogImage;
+
+						}
+
+					}
+
+					resolve(feed);
+
+				}else{
+					resolve(feed);
+				}
 
 			}).catch(err => reject(err));
 
@@ -194,7 +235,7 @@ class BetterRSS{
 
 	}
 
-	convertFeed(data){
+	_convertFeed(data){
 
 		let feed = {
 			title: null,
@@ -271,9 +312,9 @@ class BetterRSS{
 			thisitems = data.entry;
 		}
 
-		if(thisitems){
+		if(thisitems && Array.isArray(thisitems)){
 
-			for(let entry of thisitems ){
+			for(let entry of thisitems){
 
 				let item = {
 					title: null,
@@ -338,7 +379,7 @@ class BetterRSS{
 				* */
 				if(entry['media:group'] && entry['media:group']['media:thumbnail']){
 					item.thumbnail = entry['media:group']['media:thumbnail']._attributes.url;
-				}else if(entry['content:encoded']._cdata){
+				}else if(entry['content:encoded']){
 					let thumbnail = /src="([^ ]+)"/gi.exec(entry['content:encoded']._cdata);
 					if(thumbnail){
 						item.thumbnail = thumbnail[1];
@@ -392,6 +433,26 @@ class BetterRSS{
 			feed: feed,
 			items: items
 		};
+
+	}
+
+	_fetchExtraImages(url){
+
+		return new Promise((resolve, reject) => {
+
+			this._axios.get(url)
+				.then(res => {
+
+					let ogImage = /"og:image"[^<>]+content="([^ ]+)"/gi.exec(res.data);
+					ogImage = ogImage ? ogImage[1] : null;
+
+					resolve(ogImage);
+
+				})
+				.catch(err => reject(err));
+
+		});
+
 
 	}
 

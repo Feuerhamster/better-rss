@@ -1,11 +1,12 @@
 # better-rss
-Better RSS is a wrapper around [rss-parser](https://github.com/rbren/rss-parser) with auto-update, events and some useful features.
+Better RSS is specialized library for rss feeds. It emits you updates on new items in a feed and fetches og images if no images are provided in feed.
 
 ## Installation
 Go to your node project and run 
 `npm install better-rss`
 
 ## Usage
+Get updates about new items
 ```javascript
 const betterRSS = require('./main');
 const rss = new betterRSS({ updateInterval: 120000 });
@@ -16,6 +17,14 @@ rss.on('newItem', (item, feed) => {
     // do your stuff
 });
 ```
+Fetch a feed directly
+```javascript
+const betterRSS = require('./main');
+const rss = new betterRSS({ updateInterval: 120000 });
+
+rss.getRSS('http://myrss.com/rss.xml')
+    .then(data => console.log(data));
+```
 
 ## Documentation
 
@@ -24,29 +33,42 @@ rss.on('newItem', (item, feed) => {
     - `feeds` | **array** | An array with strings of your rss feeds
     - `updateInterval` | **number** | A number that specify the interval of update requests in milliseconds
     - `autoUpdate` | **bool** | This boolean defines whether automatic updates should be performed
+    - `extraImages` | **bool** | This boolean defines if the library should use og images if no default thumbnail is provided
     
 ### Methods
+
+### `getRSS(url)`
+- `url` | **string** | The url you want to get the rss feed from
+- **returns:** Promise
+
 ### `feeds()`
-- `add(url)`
+- `add(url)` | Add a feed to the list
     - `url` | **string** | The url to the rss feed
     - **returns:** boolean
         - *true* | Successful added
         - *false* | Already in feeds
-- `get(parsed)`
-    - `parsed` | **bool** | Define if you want to get an array with only strings or an array with parsed url objects
+        
+- `get(feed)` | Get a feed from the list with data
+    - `feed` | **string/number** | Define the feed that you want. (can be index in list or url itself)
     - **returns:** Array
-- `remove(url)`
-    - `url` | **string** | The url to the rss feed
+    
+- `getAll()` | Get all feeds with data
+    - **returns:** Object
+    
+- `list(parsed)` | Get a list with all feed urls
+    - `parsed` | **bool** | Define if you want to get an array with only strings or an array with parsed url objects
+        - **returns:** Array
+        
+- `remove(feed)` | Remove a feed from the list
+    - `feed` | **string** | The url to the rss feed
         - **returns:** boolean
             - *true* | Successful removed
             - *false* | Not found
-- `has(url)`
+- `has(url)` | Check if a feed is in the list
     - `url` | **string** | The url to the rss feed
         - **returns:** boolean
             - *true* | Found
             - *false* | Not found
-- `set(urlArray)`
-    - **urlArray** | *Array* | Array with strings (your rss urls)
     
 ### `updater()`
 - `start()` | Start the auto updater
@@ -60,12 +82,6 @@ rss.on('newItem', (item, feed) => {
 - `event` | **string** | The event that you want to listen on
 - `callback([args])` | **function** | The callback function that will be triggered on an event
 
-### `fetchFeed(url)`  `fetchFeed(index)`
-- `url` | **string** | A url to a rss feed
-- `index` | **number** | Index of a feed in feeds
-- **returns:**
-    - *Promise*
-
 ### `updateFeeds()`
 Updates all feeds. Please not use this. Use `updater().update()` instead.
 
@@ -77,3 +93,30 @@ Updates all feeds. Please not use this. Use `updater().update()` instead.
 - **newItem** | Executed if a new item in a feed is available
     - `item` | **object** | RSS item object
     - `feed` | **object** | RSS feed object
+    
+### Default RSS Object
+```json
+{
+    feed: {
+        title: null,
+        link: null,
+        url: null,
+        author: null,
+        description: null,
+        image: null
+    },
+    items: [
+        {
+            title: null,
+            pubDate: null,
+            link: null,
+            guid: null,
+            author: null,
+            thumbnail: null,
+            description: null,
+            content: null,
+            categories: []
+        }
+    ]
+}
+```

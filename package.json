@@ -1,7 +1,7 @@
 {
   "name": "better-rss",
-  "version": "1.0.1",
-  "description": "A wrapper around rss-parser",
+  "version": "1.1.0",
+  "description": "Better RSS is specialized library for rss feeds",
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
