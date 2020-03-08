@@ -379,6 +379,8 @@ class BetterRSS{
 				* */
 				if(entry['media:group'] && entry['media:group']['media:thumbnail']){
 					item.thumbnail = entry['media:group']['media:thumbnail']._attributes.url;
+				}else if(entry['media:thumbnail'] && entry['media:thumbnail']._attributes.url){
+					item.thumbnail = entry['media:thumbnail']._attributes.url
 				}else if(entry['content:encoded']){
 					let thumbnail = /src="([^ ]+)"/gi.exec(entry['content:encoded']._cdata);
 					if(thumbnail){
