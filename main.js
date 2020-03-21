@@ -10,6 +10,7 @@ class BetterRSS{
 		this._events = new events.EventEmitter();
 
 		this.updateInterval = options.updateInterval ? options.updateInterval : 120000;
+		this.itemLimit = options.itemLimit ? options.itemLimit : null;
 		this.fetchExtraImages = !!options.extraImages;
 		this._currentFeeds = {};
 
@@ -314,6 +315,8 @@ class BetterRSS{
 
 		if(thisitems && Array.isArray(thisitems)){
 
+			let counter = 0;
+
 			for(let entry of thisitems){
 
 				let item = {
@@ -331,7 +334,11 @@ class BetterRSS{
 				/*
 				* Title
 				* */
-				item.title = entry.title._text;
+				if(entry.title._text){
+					item.title = entry.title._text;
+				}else if(entry.title._cdata){
+					item.title = entry.title._cdata;
+				}
 
 				/*
 				* pubDate
@@ -369,7 +376,13 @@ class BetterRSS{
 				* Author
 				* */
 				if(entry.author){
-					item.author = entry.author.name._text;
+
+					if(entry.author.name){
+						item.author = entry.author.name._text;
+					}else if(entry.author._text){
+						item.author = entry.author._text;
+					}
+
 				}else if(entry['dc:author']){
 					item.author = entry['dc:author']._cdata;
 				}
@@ -378,14 +391,24 @@ class BetterRSS{
 				* Thumbnail
 				* */
 				if(entry['media:group'] && entry['media:group']['media:thumbnail']){
+
 					item.thumbnail = entry['media:group']['media:thumbnail']._attributes.url;
+
 				}else if(entry['media:thumbnail'] && entry['media:thumbnail']._attributes.url){
+
 					item.thumbnail = entry['media:thumbnail']._attributes.url
+
+				}else if(entry['media:content'] && entry['media:content']._attributes.url){
+
+					item.thumbnail = entry['media:content']._attributes.url
+
 				}else if(entry['content:encoded']){
+
 					let thumbnail = /src="([^ ]+)"/gi.exec(entry['content:encoded']._cdata);
 					if(thumbnail){
 						item.thumbnail = thumbnail[1];
 					}
+
 				}
 
 				/*
@@ -424,6 +447,12 @@ class BetterRSS{
 				}
 
 				items.push(item);
+
+				//Item limit
+				if(this.itemLimit && counter >= this.itemLimit-1){
+					break;
+				}
+				counter++;
 
 			}
 
