@@ -34,7 +34,7 @@ rss.getRSS('http://myrss.com/rss.xml')
     - `updateInterval` | **number** | A number that specify the interval of update requests in milliseconds
     - `autoUpdate` | **bool** | This boolean defines whether automatic updates should be performed
     - `extraImages` | **bool** | This boolean defines if the library should use og images if no default thumbnail is provided
-    
+    - `itemLimit` | **number** | A number that specify a limit how many items in a feed should be processed
 ### Methods
 
 ### `getRSS(url)`
@@ -95,8 +95,8 @@ Updates all feeds. Please not use this. Use `updater().update()` instead.
     - `feed` | **object** | RSS feed object
     
 ### Default RSS Object
-```json
-{
+```javascript
+let rss = {
     feed: {
         title: null,
         link: null,

@@ -1,6 +1,6 @@
 {
   "name": "better-rss",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "Better RSS is specialized library for rss feeds",
   "main": "main.js",
   "scripts": {
