@@ -13,6 +13,8 @@ class BetterRSS{
 		this.itemLimit = options.itemLimit ? options.itemLimit : null;
 		this.fetchExtraImages = !!options.extraImages;
 		this._currentFeeds = {};
+		this.cacheImages = options.cacheImages !== false;
+		this._imageCache = {};
 
 		if(options.feeds && Array.isArray(options.feeds)){
 
@@ -471,11 +473,22 @@ class BetterRSS{
 
 		return new Promise((resolve, reject) => {
 
+			if(this.cacheImages){
+				if(this._imageCache[url]){
+					resolve(this._imageCache[url]);
+					return;
+				}
+			}
+
 			this._axios.get(url)
 				.then(res => {
 
 					let ogImage = /"og:image"[^<>]+content="([^ ]+)"/gi.exec(res.data);
 					ogImage = ogImage ? ogImage[1] : null;
+
+					if(this.cacheImages){
+						this._imageCache[url] = ogImage;
+					}
 
 					resolve(ogImage);
 

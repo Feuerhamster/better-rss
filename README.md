@@ -34,6 +34,7 @@ rss.getRSS('http://myrss.com/rss.xml')
     - `updateInterval` | **number** | A number that specify the interval of update requests in milliseconds
     - `autoUpdate` | **bool** | This boolean defines whether automatic updates should be performed
     - `extraImages` | **bool** | This boolean defines if the library should use og images if no default thumbnail is provided
+    - `cacheImages` | **bool** | This boolean defines if the library should cache the image urls for og images for already fetched items
     - `itemLimit` | **number** | A number that specify a limit how many items in a feed should be processed
 ### Methods
 
