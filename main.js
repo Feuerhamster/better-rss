@@ -15,6 +15,7 @@ class BetterRSS{
 		this._currentFeeds = {};
 		this.cacheImages = options.cacheImages !== false;
 		this._imageCache = {};
+		this._filterFunction = null;
 
 		if(options.feeds && Array.isArray(options.feeds)){
 
@@ -59,7 +60,12 @@ class BetterRSS{
 						for(let item of feed.items){
 							// check if there is a new item
 							if(!checkArray.includes(item.link)){
-								this._events.emit("newItem", item, feed);
+
+								// Apply filter
+								if(!this._filterFunction || (this._filterFunction && this._filterFunction(item, feed))){
+									this._events.emit("newItem", item, feed);
+								}
+
 							}
 
 						}
@@ -217,10 +223,10 @@ class BetterRSS{
 
 					for (let i = 0; i < feed.items.length; i++){
 
-						if (!feed.items[i].thumbnail) {
+						if (!feed.items[i].thumbnail || !feed.items[i].thumbnail.match(/png|jpg|jpeg/gi)) {
 							let ogImage = await this._fetchExtraImages(feed.items[i].link);
 
-							feed.items[i].thumbnail = feed.items[i].thumbnail ? feed.items[i].thumbnail : ogImage;
+							feed.items[i].thumbnail = ogImage;
 
 						}
 
@@ -400,7 +406,7 @@ class BetterRSS{
 
 					item.thumbnail = entry['media:thumbnail']._attributes.url
 
-				}else if(entry['media:content'] && entry['media:content']._attributes.url){
+				}else if(entry['media:content'] && entry['media:content']._attributes && entry['media:content']._attributes.url){
 
 					item.thumbnail = entry['media:content']._attributes.url
 
@@ -497,6 +503,18 @@ class BetterRSS{
 
 		});
 
+
+	}
+
+	filter(func){
+
+		if(typeof func === 'function'){
+
+			this._filterFunction = func;
+
+		}else{
+			return false;
+		}
 
 	}
 

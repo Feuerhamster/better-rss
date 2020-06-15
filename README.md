@@ -86,6 +86,9 @@ rss.getRSS('http://myrss.com/rss.xml')
 ### `updateFeeds()`
 Updates all feeds. Please not use this. Use `updater().update()` instead.
 
+### `filter(func)`
+- `func(item, feed)` | **function** | A function / lambda expression that should return true or false. This is a filter function that will executed every time before a *newItem* event is emitting.
+
 ### Events
 - **updating** | Will be triggered when the auto updater updates all rss feeds
     - No callback args
