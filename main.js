@@ -217,7 +217,7 @@ class BetterRSS{
 			this._axios.get(url).then(async (res) => {
 
 				let data = this._xml.xml2js(res.data, {compact: true});
-				let feed = this._convertFeed(data.feed ? data.feed : data.rss.channel);
+				let feed = this._convertFeed(data.feed ? data.feed : data.rss.channel, url);
 
 				if(this.fetchExtraImages) {
 
@@ -244,7 +244,7 @@ class BetterRSS{
 
 	}
 
-	_convertFeed(data){
+	_convertFeed(data, source = null){
 
 		let feed = {
 			title: null,
@@ -252,7 +252,8 @@ class BetterRSS{
 			url: null,
 			author: null,
 			description: null,
-			image: null
+			image: null,
+			_source: source
 		};
 
 

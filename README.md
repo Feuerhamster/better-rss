@@ -107,7 +107,8 @@ let rss = {
         url: null,
         author: null,
         description: null,
-        image: null
+        image: null,
+        _source: null
     },
     items: [
         {
