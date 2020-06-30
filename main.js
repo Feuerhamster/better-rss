@@ -2,10 +2,10 @@ class BetterRSS{
 
 	constructor(options) {
 
-		const events = require('events');
-		this._url = require('url');
-		this._axios = require('axios');
-		this._xml = require('xml-js');
+		const events = require("events");
+		this._url = require("url");
+		this._axios = require("axios");
+		this._xml = require("xml-js");
 
 		this._events = new events.EventEmitter();
 
@@ -80,7 +80,7 @@ class BetterRSS{
 
 				})
 				.catch((err) => {
-					this._events.emit('error', err);
+					this._events.emit("error", err);
 				});
 
 		}
@@ -99,7 +99,7 @@ class BetterRSS{
 
 				this._updater = setInterval(() => {
 
-					this._events.emit('updating');
+					this._events.emit("updating");
 
 					this.updateFeeds();
 
@@ -147,7 +147,7 @@ class BetterRSS{
 			},
 			get: (feed) => {
 
-				if(typeof feed === 'number'){
+				if(typeof feed === "number"){
 
 					let feeds = Object.keys(this._currentFeeds);
 
@@ -180,7 +180,7 @@ class BetterRSS{
 			},
 			remove: (feed) => {
 
-				if(typeof feed === 'number'){
+				if(typeof feed === "number"){
 
 					let feeds = Object.keys(this._currentFeeds);
 
@@ -193,7 +193,7 @@ class BetterRSS{
 
 				}else{
 
-					if(typeof this._currentFeeds[feed] !== 'undefined'){
+					if(typeof this._currentFeeds[feed] !== "undefined"){
 						delete this._currentFeeds[feed];
 						return true;
 					}else{
@@ -269,7 +269,7 @@ class BetterRSS{
 		* */
 		if(Array.isArray(data.link)){
 
-			let link = data.link.find(el => el._attributes.rel === 'alternate');
+			let link = data.link.find(el => el._attributes.rel === "alternate");
 			feed.link = link ? link._attributes.href : null;
 
 		}else if(data.link._text){
@@ -281,7 +281,7 @@ class BetterRSS{
 		* */
 		if(Array.isArray(data.link)){
 
-			let link = data.link.find(el => el._attributes.rel === 'self');
+			let link = data.link.find(el => el._attributes.rel === "self");
 			feed.url = link ? link._attributes.href : null;
 
 		}
@@ -363,7 +363,7 @@ class BetterRSS{
 				* */
 				if(Array.isArray(entry.link)){
 
-					let link = data.link.find(el => el._attributes.rel === 'alternate');
+					let link = data.link.find(el => el._attributes.rel === "alternate");
 					feed.link = link ? link : null;
 
 				}else if(entry.link._attributes){
@@ -392,28 +392,28 @@ class BetterRSS{
 						item.author = entry.author._text;
 					}
 
-				}else if(entry['dc:author']){
-					item.author = entry['dc:author']._cdata;
+				}else if(entry["dc:author"]){
+					item.author = entry["dc:author"]._cdata;
 				}
 
 				/*
 				* Thumbnail
 				* */
-				if(entry['media:group'] && entry['media:group']['media:thumbnail']){
+				if(entry["media:group"] && entry["media:group"]["media:thumbnail"]){
 
-					item.thumbnail = entry['media:group']['media:thumbnail']._attributes.url;
+					item.thumbnail = entry["media:group"]["media:thumbnail"]._attributes.url;
 
-				}else if(entry['media:thumbnail'] && entry['media:thumbnail']._attributes.url){
+				}else if(entry["media:thumbnail"] && entry["media:thumbnail"]._attributes.url){
 
-					item.thumbnail = entry['media:thumbnail']._attributes.url
+					item.thumbnail = entry["media:thumbnail"]._attributes.url
 
-				}else if(entry['media:content'] && entry['media:content']._attributes && entry['media:content']._attributes.url){
+				}else if(entry["media:content"] && entry["media:content"]._attributes && entry["media:content"]._attributes.url){
 
-					item.thumbnail = entry['media:content']._attributes.url
+					item.thumbnail = entry["media:content"]._attributes.url
 
-				}else if(entry['content:encoded']){
+				}else if(entry["content:encoded"]){
 
-					let thumbnail = /src="([^ ]+)"/gi.exec(entry['content:encoded']._cdata);
+					let thumbnail = /src="([^ ]+)"/gi.exec(entry["content:encoded"]._cdata);
 					if(thumbnail){
 						item.thumbnail = thumbnail[1];
 					}
@@ -427,18 +427,18 @@ class BetterRSS{
 					item.description = entry.description._text;
 				}else if(entry.description && entry.description._cdata){
 					item.description = entry.description._cdata;
-				}else if(entry['media:group'] && entry['media:group']['media:description']){
-					item.description = entry['media:group']['media:description']._text;
+				}else if(entry["media:group"] && entry["media:group"]["media:description"]){
+					item.description = entry["media:group"]["media:description"]._text;
 				}
 
 				/*
 				* Content
 				* */
-				if(entry['content:encoded']){
-					if(entry['content:encoded']._text){
-						item.content = entry['content:encoded']._text;
-					}else if(entry['content:encoded']._cdata){
-						item.content = entry['content:encoded']._cdata;
+				if(entry["content:encoded"]){
+					if(entry["content:encoded"]._text){
+						item.content = entry["content:encoded"]._text;
+					}else if(entry["content:encoded"]._cdata){
+						item.content = entry["content:encoded"]._cdata;
 					}
 				}
 
@@ -509,7 +509,7 @@ class BetterRSS{
 
 	filter(func){
 
-		if(typeof func === 'function'){
+		if(typeof func === "function"){
 
 			this._filterFunction = func;
 
