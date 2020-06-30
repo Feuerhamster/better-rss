@@ -54,7 +54,7 @@ class BetterRSS{
 					if(this._currentFeeds[url] !== null){
 
 						//create check-array
-						let checkArray = Array.from(this._currentFeeds[url].items, el => el.link);
+						let checkArray = Array.from(this._currentFeeds[url].items, (el) => el.link);
 
 						// loop over all items in feed
 						for(let item of feed.items){
@@ -121,7 +121,7 @@ class BetterRSS{
 
 			},
 			update: () => this.updateFeeds()
-		}
+		};
 
 	}
 
@@ -172,7 +172,7 @@ class BetterRSS{
 			list: (parsed = false) => {
 
 				if(parsed){
-					return Array.from(Object.keys(this._currentFeeds), (el) =>this._url.parse(el));
+					return Array.from(Object.keys(this._currentFeeds), (el) => this._url.parse(el));
 				}else{
 					return Array.from(Object.keys(this._currentFeeds));
 				}
@@ -238,7 +238,7 @@ class BetterRSS{
 					resolve(feed);
 				}
 
-			}).catch(err => reject(err));
+			}).catch((err) => reject(err));
 
 		});
 
@@ -269,7 +269,7 @@ class BetterRSS{
 		* */
 		if(Array.isArray(data.link)){
 
-			let link = data.link.find(el => el._attributes.rel === "alternate");
+			let link = data.link.find((el) => el._attributes.rel === "alternate");
 			feed.link = link ? link._attributes.href : null;
 
 		}else if(data.link._text){
@@ -281,7 +281,7 @@ class BetterRSS{
 		* */
 		if(Array.isArray(data.link)){
 
-			let link = data.link.find(el => el._attributes.rel === "self");
+			let link = data.link.find((el) => el._attributes.rel === "self");
 			feed.url = link ? link._attributes.href : null;
 
 		}
@@ -405,11 +405,11 @@ class BetterRSS{
 
 				}else if(entry["media:thumbnail"] && entry["media:thumbnail"]._attributes.url){
 
-					item.thumbnail = entry["media:thumbnail"]._attributes.url
+					item.thumbnail = entry["media:thumbnail"]._attributes.url;
 
 				}else if(entry["media:content"] && entry["media:content"]._attributes && entry["media:content"]._attributes.url){
 
-					item.thumbnail = entry["media:content"]._attributes.url
+					item.thumbnail = entry["media:content"]._attributes.url;
 
 				}else if(entry["content:encoded"]){
 
@@ -469,10 +469,7 @@ class BetterRSS{
 			items = null;
 		}
 
-		return {
-			feed: feed,
-			items: items
-		};
+		return { feed, items };
 
 	}
 
@@ -488,7 +485,7 @@ class BetterRSS{
 			}
 
 			this._axios.get(url)
-				.then(res => {
+				.then((res) => {
 
 					let ogImage = /"og:image"[^<>]+content="([^ ]+)"/gi.exec(res.data);
 					ogImage = ogImage ? ogImage[1] : null;
@@ -500,7 +497,7 @@ class BetterRSS{
 					resolve(ogImage);
 
 				})
-				.catch(err => reject(err));
+				.catch((err) => reject(err));
 
 		});
 
